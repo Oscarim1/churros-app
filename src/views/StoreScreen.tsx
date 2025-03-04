@@ -13,12 +13,19 @@ import {
   ScrollView,
   SafeAreaView,
   Platform,
-  StatusBar, // Importamos StatusBar
+  StatusBar,
 } from "react-native"
 import { ProductProvider, useProducts } from "../controllers/ProductController"
+import { CartProvider, useCart } from "../controllers/CartController"
 import { Ionicons } from "@expo/vector-icons"
+import ProductQuantityControl from "../components/ProductQuantityControl"
 
 const Header: React.FC = () => {
+  const { cart } = useCart()
+
+  // Calcular el total de items en el carrito
+  const cartItemsCount = cart.reduce((total, item) => total + item.quantity, 0)
+
   return (
     <View style={styles.header}>
       <Image source={require("../assets/logo.png")} style={styles.headerLogo} resizeMode="contain" />
@@ -28,6 +35,11 @@ const Header: React.FC = () => {
         </TouchableOpacity>
         <TouchableOpacity style={styles.cartButton}>
           <Ionicons name="cart-outline" size={24} color="#333" />
+          {cartItemsCount > 0 && (
+            <View style={styles.cartBadge}>
+              <Text style={styles.cartBadgeText}>{cartItemsCount}</Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
     </View>
@@ -56,21 +68,40 @@ const CategoryFilter: React.FC = () => {
   )
 }
 
+const formatNumber = (num: number) => {
+  return num.toLocaleString("es-CL")
+}
+
 const ProductCard: React.FC<{ product: any }> = ({ product }) => {
+  const { cart, addToCart, removeFromCart, updateQuantity } = useCart()
+
+  const cartItem = cart.find((item) => item.id === product.id)
+
+  const handleAddToCart = (product: any, quantity: number) => {
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      quantity,
+      image_url: product.image_url,
+    })
+  }
+
   return (
     <View style={styles.productCard}>
-      <Image
-        source={{ uri: product.image_url }} // Cambiado de image a image_url
-        style={styles.productImage}
-      />
+      <Image source={{ uri: product.image_url }} style={styles.productImage} />
       <View style={styles.productInfo}>
         <Text style={styles.productName}>{product.name}</Text>
         <Text style={styles.productDescription}>{product.description}</Text>
         <View style={styles.productPriceContainer}>
-          <Text style={styles.productPrice}>${product.price.toLocaleString()}</Text>
-          <TouchableOpacity style={styles.addButton}>
-            <Ionicons name="add" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
+          <Text style={styles.productPrice}>${formatNumber(product.price)}</Text>
+          <ProductQuantityControl
+            product={product}
+            onAddToCart={handleAddToCart}
+            onUpdateQuantity={updateQuantity}
+            onRemove={removeFromCart}
+            initialQuantity={cartItem ? cartItem.quantity : 0}
+          />
         </View>
       </View>
     </View>
@@ -109,7 +140,6 @@ const StoreScreenContent: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      {/* Configuramos StatusBar para que use el estilo oscuro */}
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       <SafeAreaView style={styles.safeArea}>
         <Header />
@@ -123,7 +153,9 @@ const StoreScreenContent: React.FC = () => {
 const StoreScreen: React.FC = () => {
   return (
     <ProductProvider>
-      <StoreScreenContent />
+      <CartProvider>
+        <StoreScreenContent />
+      </CartProvider>
     </ProductProvider>
   )
 }
@@ -146,10 +178,10 @@ const styles = StyleSheet.create({
     borderBottomColor: "#EEEEEE",
     ...Platform.select({
       ios: {
-        marginTop: 3, // Reducido a 3 para iOS
+        marginTop: 3,
       },
       android: {
-        marginTop: 35, // Se mantiene en 35 para Android
+        marginTop: 35,
       },
     }),
   },
@@ -163,9 +195,27 @@ const styles = StyleSheet.create({
   menuButton: {
     marginRight: 15,
   },
-  cartButton: {},
+  cartButton: {
+    position: "relative",
+  },
+  cartBadge: {
+    position: "absolute",
+    top: -5,
+    right: -5,
+    backgroundColor: "#F47920",
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  cartBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
   categoryWrapper: {
-    height: 60, // Altura fija para el contenedor
+    height: 60,
     backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
     borderBottomColor: "#EEEEEE",
@@ -173,16 +223,16 @@ const styles = StyleSheet.create({
   categoriesContainer: {
     paddingVertical: 10,
     paddingHorizontal: 16,
-    alignItems: "center", // Centra verticalmente los botones
+    alignItems: "center",
   },
   categoryButton: {
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,
-    marginRight: 12, // Aumentado el espacio entre botones
+    marginRight: 12,
     backgroundColor: "#F5F5F5",
-    height: 40, // Altura fija para los botones
-    justifyContent: "center", // Centra el texto verticalmente
+    height: 40,
+    justifyContent: "center",
   },
   selectedCategoryButton: {
     backgroundColor: "#333333",
@@ -190,7 +240,7 @@ const styles = StyleSheet.create({
   categoryText: {
     fontSize: 14,
     color: "#333333",
-    fontWeight: "500", // Texto un poco más grueso
+    fontWeight: "500",
   },
   selectedCategoryText: {
     color: "#FFFFFF",
@@ -209,8 +259,8 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
-        borderWidth: 0.5, // Agregamos un borde sutil para iOS
-        borderColor: "rgba(0,0,0,0.1)", // Color del borde semi-transparente
+        borderWidth: 0.5,
+        borderColor: "rgba(0,0,0,0.1)",
       },
       android: {
         elevation: 2,
@@ -244,14 +294,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#333333",
   },
-  addButton: {
-    backgroundColor: "#F47920",
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: "center",
-    alignItems: "center",
-  },
   loaderContainer: {
     flex: 1,
     justifyContent: "center",
@@ -260,4 +302,3 @@ const styles = StyleSheet.create({
 })
 
 export default StoreScreen
-
