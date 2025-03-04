@@ -35,13 +35,13 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
         },
       })
 
-      const data = await response.json()
+      const data: Product[] = await response.json()
 
       if (data) {
         setProducts(data)
 
         // Extraer categorías únicas de los productos
-        const uniqueCategories = [...new Set(data.map((product: Product) => product.category))]
+        const uniqueCategories: string[] = [...new Set(data.map((product: Product) => product.category))]
         setCategories(
           uniqueCategories.map((name: string, index: number) => ({
             id: index.toString(),
