@@ -39,8 +39,7 @@ const CartScreen: React.FC = () => {
   }
 
   const handleCheckout = () => {
-    // Implementar navegación a checkout cuando esté disponible
-    alert("Funcionalidad de checkout en desarrollo")
+    navigation.navigate("CheckoutSimplificado")
   }
 
   const renderCartItem = ({ item }: { item: any }) => (
