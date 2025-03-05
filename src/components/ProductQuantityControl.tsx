@@ -4,6 +4,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
+import { useCart } from "../controllers/CartController"
 
 interface Product {
   id: string
@@ -31,16 +32,19 @@ const ProductQuantityControl: React.FC<ProductQuantityControlProps> = ({
 }) => {
   const [quantity, setQuantity] = useState(initialQuantity)
   const [showControls, setShowControls] = useState(initialQuantity > 0)
+  const { cart } = useCart() // Get access to the cart to monitor changes
 
+  // Reset control state when cart changes (including when it's emptied)
   useEffect(() => {
-    if (initialQuantity > 0) {
-      setQuantity(initialQuantity)
+    const cartItem = cart.find((item) => item.id === product.id)
+    if (cartItem) {
+      setQuantity(cartItem.quantity)
       setShowControls(true)
     } else {
       setQuantity(0)
       setShowControls(false)
     }
-  }, [initialQuantity])
+  }, [cart, product.id])
 
   const handleInitialAdd = () => {
     const newQuantity = 1
