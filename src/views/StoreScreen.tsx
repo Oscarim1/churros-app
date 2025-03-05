@@ -16,12 +16,17 @@ import {
   StatusBar,
 } from "react-native"
 import { ProductProvider, useProducts } from "../controllers/ProductController"
-import { CartProvider, useCart } from "../controllers/CartController"
+import { useCart } from "../controllers/CartController" // Remove CartProvider import
 import { Ionicons } from "@expo/vector-icons"
 import ProductQuantityControl from "../components/ProductQuantityControl"
+import { useNavigation } from "@react-navigation/native"
+import type { StackNavigationProp } from "@react-navigation/stack"
+import type { RootStackParamList } from "../types/navigation"
 
+// Update the Header component to use the typed navigation
 const Header: React.FC = () => {
   const { cart } = useCart()
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>()
 
   // Calcular el total de items en el carrito
   const cartItemsCount = cart.reduce((total, item) => total + item.quantity, 0)
@@ -33,7 +38,7 @@ const Header: React.FC = () => {
         <TouchableOpacity style={styles.menuButton}>
           <Ionicons name="menu" size={24} color="#333" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.cartButton}>
+        <TouchableOpacity style={styles.cartButton} onPress={() => navigation.navigate("Cart")}>
           <Ionicons name="cart-outline" size={24} color="#333" />
           {cartItemsCount > 0 && (
             <View style={styles.cartBadge}>
@@ -75,6 +80,7 @@ const formatNumber = (num: number) => {
 const ProductCard: React.FC<{ product: any }> = ({ product }) => {
   const { cart, addToCart, removeFromCart, updateQuantity } = useCart()
 
+  // Find the item in the cart (if it exists)
   const cartItem = cart.find((item) => item.id === product.id)
 
   const handleAddToCart = (product: any, quantity: number) => {
@@ -83,13 +89,13 @@ const ProductCard: React.FC<{ product: any }> = ({ product }) => {
       name: product.name,
       price: product.price,
       quantity,
-      image_url: product.image_url,
+      image_url: product.image || product.image_url,
     })
   }
 
   return (
     <View style={styles.productCard}>
-      <Image source={{ uri: product.image_url }} style={styles.productImage} />
+      <Image source={{ uri: product.image || product.image_url }} style={styles.productImage} />
       <View style={styles.productInfo}>
         <Text style={styles.productName}>{product.name}</Text>
         <Text style={styles.productDescription}>{product.description}</Text>
@@ -153,9 +159,7 @@ const StoreScreenContent: React.FC = () => {
 const StoreScreen: React.FC = () => {
   return (
     <ProductProvider>
-      <CartProvider>
-        <StoreScreenContent />
-      </CartProvider>
+      <StoreScreenContent />
     </ProductProvider>
   )
 }

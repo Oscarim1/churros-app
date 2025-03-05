@@ -24,6 +24,8 @@ interface CartContextData {
 
 const CartContext = createContext<CartContextData>({} as CartContextData)
 
+const CART_STORAGE_KEY = "churros_cuchito_cart"
+
 export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [cart, setCart] = useState<CartItem[]>([])
 
@@ -31,9 +33,11 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     const loadCart = async () => {
       try {
-        const savedCart = await AsyncStorage.getItem("cart")
+        const savedCart = await AsyncStorage.getItem(CART_STORAGE_KEY)
         if (savedCart) {
-          setCart(JSON.parse(savedCart))
+          const parsedCart = JSON.parse(savedCart)
+          console.log("Loaded cart from storage:", parsedCart)
+          setCart(parsedCart)
         }
       } catch (error) {
         console.error("Error loading cart from storage:", error)
@@ -47,7 +51,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     const saveCart = async () => {
       try {
-        await AsyncStorage.setItem("cart", JSON.stringify(cart))
+        console.log("Saving cart to storage:", cart)
+        await AsyncStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart))
       } catch (error) {
         console.error("Error saving cart to storage:", error)
       }
@@ -57,6 +62,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [cart])
 
   const addToCart = (item: CartItem) => {
+    console.log("Adding to cart:", item)
     setCart((currentCart) => {
       const existingItemIndex = currentCart.findIndex(
         (cartItem) => cartItem.id === item.id && cartItem.canjeado === item.canjeado,
@@ -73,14 +79,21 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }
 
   const removeFromCart = (id: string) => {
+    console.log("Removing from cart, id:", id)
     setCart((currentCart) => currentCart.filter((item) => item.id !== id))
   }
 
   const clearCart = () => {
+    console.log("Clearing cart")
+    // Ensure we're setting to an empty array and also clear AsyncStorage
     setCart([])
+    AsyncStorage.setItem(CART_STORAGE_KEY, JSON.stringify([])).catch((error) =>
+      console.error("Error clearing cart in storage:", error),
+    )
   }
 
   const updateQuantity = (id: string, quantity: number) => {
+    console.log("Updating quantity, id:", id, "quantity:", quantity)
     setCart((currentCart) => {
       return currentCart.map((item) => (item.id === id ? { ...item, quantity } : item))
     })
