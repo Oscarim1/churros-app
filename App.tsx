@@ -5,6 +5,7 @@ import SplashScreen from "./src/views/SplashScreen"
 import LoginScreen from "./src/views/LoginScreen"
 import StoreScreen from "./src/views/StoreScreen"
 import CartScreen from "./src/views/CartScreen"
+import CheckoutSimplificadoScreen from "./src/views/CheckoutSimplificadoScreen"
 import { AuthProvider } from "./src/controllers/AuthController"
 import { CartProvider } from "./src/controllers/CartController"
 import { StatusBar } from "react-native"
@@ -23,6 +24,7 @@ export default function App() {
               <Stack.Screen name="Login" component={LoginScreen} />
               <Stack.Screen name="Store" component={StoreScreen} />
               <Stack.Screen name="Cart" component={CartScreen} />
+              <Stack.Screen name="CheckoutSimplificado" component={CheckoutSimplificadoScreen} />
             </Stack.Navigator>
           </NavigationContainer>
         </CartProvider>
@@ -30,3 +32,4 @@ export default function App() {
     </SafeAreaProvider>
   )
 }
+
